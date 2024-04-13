@@ -1,68 +1,62 @@
 const User = require('../models/user');
 
-module.exports.profile = function(req,res){
-     return res.render('user_profile',{
-        title:"Samarth"
-     })
-}
-module.exports.activity = function(req,res){
-   return res.end('<h1>Activity is being showed</h1>');
-}
-
-module.exports.signUp = function(req,res){
-    if(req.isAuthenticated()){
-       return  res.redirect('/users/profile');
-    }
-
-   return res.render('signup');
-}
-module.exports.signIn = function(req,res){
-
-    if(req.isAuthenticated()){
-       return res.redirect('/users/profile');
-    }
-
-   return res.render('login');
-}
-
-//get the sign up data 
-
-module.exports.create = function(req, res) {
-   // Check if a user with the provided email already exists
-   User.findOne({ email: req.body.email })
-       .then(user => {
-           if (user) {
-               // If user already exists, redirect back
-               return res.redirect('back');
-           } else {
-               // If user doesn't exist, create a new user
-               User.create(req.body)
-                   .then(newUser => {
-                       // Redirect to sign-in page after successful creation
-                       return res.redirect('/users/sign-in');
-                   })
-                   .catch(err => {
-                       console.error('Error in creating user while signing up:', err);
-                       return res.redirect('back');
-                   });
-           }
-       })
-       .catch(err => {
-           console.error('Error in finding user in signing up:', err);
-           return res.redirect('back');
-       });
+module.exports.profile = function(req, res) {
+    return res.render('user_profile', {
+        title: 'User Profile'
+    });
 };
 
-module.exports.createSession = function (req,res){
-   //todo later
-    return res.redirect('/');
-}
+// render the sign up page
+module.exports.signUp = function(req, res) {
+    if (req.isAuthenticated()) {
+        return res.redirect('/users/profile');
+    }
 
-module.exports.destroySession = function(req, res) {
+    return res.render('user_sign_up', {
+        title: "Codeial | Sign Up"
+    });
+};
+
+// render the sign in page
+module.exports.signIn = function(req, res) {
+    if (req.isAuthenticated()) {
+        return res.redirect('/users/profile');
+    }
+    return res.render('user_sign_in', {
+        title: "Codeial | Sign In"
+    });
+};
+
+// get the sign up data
+module.exports.create = async function(req, res) {
+    try {
+        if (req.body.password != req.body.confirm_password) {
+            return res.redirect('back');
+        }
+
+        const existingUser = await User.findOne({ email: req.body.email });
+        if (!existingUser) {
+            const user = await User.create(req.body);
+            return res.redirect('/users/sign-in');
+        } else {
+            return res.redirect('back');
+        }
+    } catch (err) {
+        // Handle error
+        console.error('Error in signing up:', err);
+        return res.redirect('back');
+    }
+};
+
+// sign in and create a session for the user
+module.exports.createSession = function(req, res) {
+    return res.redirect('/');
+};
+
+module.exports.destroySession = function(req, res, next) {
     req.logout(function(err) {
         if (err) {
-            console.error('Error logging out:', err);
-            return res.redirect('/');
+            return next(err);
         }
         return res.redirect('/');
     });
