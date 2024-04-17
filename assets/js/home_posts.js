@@ -10,7 +10,8 @@
             url:'/posts/create',
             data:newPostForm.serialize(),
             success:function(data){
-              let newPost = newPostDom(data.data.post);
+            //   let newPost = newPostDom(data.data.post);
+            console.log('hello');
               $('#posts-list-container>ul').preprend(newPost);
             },err:function(error){
                 console.log(error.responseText);
