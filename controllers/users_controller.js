@@ -21,13 +21,40 @@ module.exports.update = async function(req, res) {
         // Check if the logged-in user matches the user to be updated
         console.log("update function called");
         if (req.user.id == req.params.id) {
-            const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body);
-
-            if (!updatedUser) {
+            // Fetch the user by ID
+            const user = await User.findById(req.params.id);
+            if (!user) {
                 return res.status(404).send('User not found');
             }
 
-            return res.redirect('back');
+            // Update user fields
+            user.name = req.body.name;
+            user.email = req.body.email;
+
+            // Handle avatar upload
+            User.uploadedAvatar(req, res, function(err) {
+                if (err) {
+                    console.log('multr error', err);
+                    return res.status(500).send('Error uploading avatar');
+                }
+                console.log(req.file);
+                console.log(req.body);
+                console.log(req.files);
+                // Save the updated user
+                if (req.file) {
+                    // This is saving the path of the uploaded file into the avatar field in the user
+                    user.avatar = User.avatarPath + '/' + req.file.filename;
+                    console.log('hello');
+                }
+                
+                user.save().then(() => {
+                    return res.redirect('back');
+                }).catch(err => {
+                    console.log('Error saving user:', err);
+                    return res.status(500).send('Error saving user');
+                });
+            });
+
         } else {
             return res.status(401).send('Unauthorized');
         }
@@ -38,6 +65,7 @@ module.exports.update = async function(req, res) {
         return res.status(500).send('Internal Server Error');
     }
 };
+
 
 // render the sign up page
 module.exports.signUp = function(req, res) {
